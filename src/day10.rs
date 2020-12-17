@@ -1,3 +1,5 @@
+use std::vec;
+
 fn setup(input: &str) -> Vec<usize> {
     let mut numbers = vec![0];
     for n in input.split('\n') {
@@ -28,21 +30,33 @@ pub fn part2(input: String) {
 }
 
 fn n_arragements(numbers: &Vec<usize>) -> usize {
-    for i in 1..numbers.len() {
-        if okay_to_remove(&numbers, i) {
-            let mut new_numbers = numbers.clone();
-            new_numbers.swap_remove(i);
-            return n_arragements(&new_numbers);
+    let mut differences = Vec::new();
+    for window in numbers.windows(2) {
+        differences.push(window[1] - window[0]);
+    }
+    /* each value in n_arrangements_0_to_k is [a, b, c] where:
+                    a = # arrangements ending with 1 difference
+                    b = # arrangements ending with 2 difference
+                    c = # arrangements ending with 3 difference
+        for the subproblem 0..k
+    */
+    let mut n_arrangements_0_to_k = vec![vec![0, 0, 0]; differences.len()];
+    n_arrangements_0_to_k[0][differences[0] - 1] = 1;
+    for (i_minus_1, diff) in differences[1..].iter().enumerate() {
+        let i = i_minus_1 + 1; // i_minus_1 is relative to differences[1..]
+
+        // We can leave this jump as-is -> all of the previous arrangements are valid:
+        n_arrangements_0_to_k[i][*diff - 1] = n_arrangements_0_to_k[i_minus_1].iter().sum();
+
+        // We can also jump from previous arrangements that ended in 1-jump or 2-jump
+        // as long as the new jump isn't too big
+        for new_final_jump in (*diff + 1)..=(*diff + 2) {
+            if new_final_jump > 3 {
+                break;
+            }
+            n_arrangements_0_to_k[i][new_final_jump - 1] =
+                n_arrangements_0_to_k[i_minus_1][new_final_jump - diff - 1];
         }
     }
-    return 1;
+    return n_arrangements_0_to_k.last().unwrap().iter().sum();
 }
-
-fn okay_to_remove(numbers: &Vec<usize>, index: usize) -> bool {
-    if index == 0 || index == numbers.len() {
-        return false;
-    };
-    return numbers[index + 1] - numbers[index - 1] <= 3;
-}
-// (0), 1, 4, 5, 6, 7, 10, 11, 12, 15, 16, 19, (22)
-//    1   3  1  1  1  3   1   1   3   1   3   3
