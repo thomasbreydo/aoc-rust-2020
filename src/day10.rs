@@ -8,7 +8,7 @@ fn setup(input: &str) -> Vec<usize> {
     }
     numbers.sort_unstable();
     numbers.push(numbers.last().unwrap() + 3);
-    return numbers;
+    numbers
 }
 pub fn part1(input: String) {
     let numbers = setup(&input);
